@@ -55,6 +55,11 @@ public class MorseDecoder {
         for (int binIndex = 0; binIndex < totalBinCount; binIndex++) {
             // Get the right number of samples from the inputFile
             // Sum all the samples together and store them in the returnBuffer
+            int framesRead = inputFile.readFrames(sampleBuffer, BIN_SIZE);
+            returnBuffer[binIndex] = 0;
+            for (int sampleCount = 0; sampleCount < sampleBuffer.length; sampleCount++) {
+                returnBuffer[binIndex] += sampleBuffer[sampleCount];
+            }
         }
         return returnBuffer;
     }
@@ -87,7 +92,37 @@ public class MorseDecoder {
         // else if issilence and wassilence
         // else if issilence and not wassilence
 
-        return "";
+        String morseCode = "";
+        boolean waspower = false, ispower = false, wassilence = false, issilence = false;
+        int binCount = 0;
+        for (int index = 0; index < powerMeasurements.length; index++) {
+            if (powerMeasurements[index] == 1) {
+                ispower = true;
+                issilence = false;
+            } else {
+                ispower = false;
+                issilence = true;
+            }
+            if (ispower) {
+                binCount++;
+                if (!waspower) {
+                    morseCode += " ";
+                }
+            }
+            if (issilence) {
+                if (!wassilence) {
+                    if (binCount >= DASH_BIN_COUNT) {
+                        morseCode += "-";
+                    } else if (binCount >= 0.5 * DASH_BIN_COUNT) {
+                        morseCode += ".";
+                    }
+                    binCount = 0;
+                }
+            }
+            waspower = ispower;
+            wassilence = issilence;
+        }
+        return morseCode;
     }
 
     /**
